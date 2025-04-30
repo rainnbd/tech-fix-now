@@ -1,11 +1,11 @@
 <script>
-  import { auth } from '../firebase.js'; // Ruta relativa al archivo firebase.js
-  import { onAuthStateChanged } from 'firebase/auth';
+  import { auth } from "$lib/js/firebase"; // Ruta relativa al archivo firebase.js
+  import { onAuthStateChanged } from "firebase/auth";
 
   let usuario = null; // Variable para detectar si el usuario está autenticado
 
   // Monitorear el estado de autenticación
-  if (typeof window !== 'undefined') {
+  if (typeof window !== "undefined") {
     onAuthStateChanged(auth, (user) => {
       usuario = user ? user : null; // Establecer el usuario autenticado o nulo
     });
@@ -43,6 +43,7 @@
     <p>© 2025 TechFix Now. Todos los derechos reservados.</p>
   </footer>
 </main>
+
 <style>
   /* Estilo del encabezado */
   header {
