@@ -96,200 +96,205 @@
   };
 </script>
 
-<main
-  class="container d-flex justify-content-center align-items-center min-vh-100"
->
-  <div class="card shadow animate-fadeIn" style="max-width: 400px; width:100%;">
-    <div class="card-body">
-      {#if modo === "login"}
-        <h1 class="h4 text-center mb-4">Inicia Sesión</h1>
-        <form on:submit|preventDefault={iniciarSesion}>
-          <div class="mb-3">
-            <input
-              type="email"
-              bind:value={correo}
-              class="form-control"
-              placeholder="Correo electrónico"
-              required
-            />
-          </div>
-          <div class="input-group mb-3">
-            <input
-              type={mostrarClave ? "text" : "password"}
-              bind:value={contraseña}
-              class="form-control"
-              placeholder="Contraseña"
-              required
-            />
-            <button
-              type="button"
-              class="btn btn-outline-secondary"
-              on:click={() => (mostrarClave = !mostrarClave)}
-            >
-              {#if mostrarClave}
-                <i class="fas fa-eye-slash"></i>
-              {:else}
-                <i class="fas fa-eye"></i>
-              {/if}
+<div class="bg-secondary">
+  <main
+    class="container d-flex justify-content-center align-items-center min-vh-100"
+  >
+    <div
+      class="card shadow animate-fadeIn"
+      style="max-width: 400px; width:100%;"
+    >
+      <div class="card-body">
+        {#if modo === "login"}
+          <h1 class="h4 text-center mb-4">Inicia Sesión</h1>
+          <form on:submit|preventDefault={iniciarSesion}>
+            <div class="mb-3">
+              <input
+                type="email"
+                bind:value={correo}
+                class="form-control"
+                placeholder="Correo electrónico"
+                required
+              />
+            </div>
+            <div class="input-group mb-3">
+              <input
+                type={mostrarClave ? "text" : "password"}
+                bind:value={contraseña}
+                class="form-control"
+                placeholder="Contraseña"
+                required
+              />
+              <button
+                type="button"
+                class="btn btn-outline-secondary"
+                on:click={() => (mostrarClave = !mostrarClave)}
+              >
+                {#if mostrarClave}
+                  <i class="fas fa-eye-slash"></i>
+                {:else}
+                  <i class="fas fa-eye"></i>
+                {/if}
+              </button>
+            </div>
+            <button type="submit" class="btn btn-primary w-100 mb-2">
+              <i class="fas fa-sign-in-alt me-1"></i> Iniciar Sesión
             </button>
-          </div>
-          <button type="submit" class="btn btn-primary w-100 mb-2">
-            <i class="fas fa-sign-in-alt me-1"></i> Iniciar Sesión
-          </button>
-        </form>
-        <button
-          type="button"
-          class="btn btn-danger w-100 mb-3"
-          on:click={iniciarConGoogle}
-        >
-          <i class="fab fa-google me-1"></i> Iniciar con Google
-        </button>
-        <p class="text-center mb-0">
-          ¿No tienes cuenta?
+          </form>
           <button
             type="button"
-            class="btn btn-link p-0 align-baseline"
-            on:click={() => (modo = "registro")}
+            class="btn btn-danger w-100 mb-3"
+            on:click={iniciarConGoogle}
           >
-            Regístrate
+            <i class="fab fa-google me-1"></i> Iniciar con Google
           </button>
-        </p>
-      {:else}
-        <h1 class="h4 text-center mb-4">Regístrate</h1>
-        <form on:submit|preventDefault={registrar}>
-          <div class="mb-3">
-            <!-- svelte-ignore a11y_label_has_associated_control -->
-            <label class="form-label">Tipo de Cuenta</label>
-            <select bind:value={tipoCuenta} class="form-select">
-              <option>Usuario</option>
-              <option>Empresa</option>
-            </select>
-          </div>
-
-          {#if tipoCuenta === "Usuario"}
-            <div class="mb-3">
-              <input
-                type="text"
-                bind:value={nombre}
-                class="form-control"
-                placeholder="Nombre"
-                required
-              />
-            </div>
-            <div class="mb-3">
-              <input
-                type="text"
-                bind:value={apellido}
-                class="form-control"
-                placeholder="Apellido"
-                required
-              />
-            </div>
-            <div class="mb-3">
-              <input
-                type="tel"
-                bind:value={celular}
-                class="form-control"
-                placeholder="Celular"
-                pattern="[0-9]*"
-                required
-              />
-            </div>
-          {:else}
-            <div class="mb-3">
-              <input
-                type="text"
-                bind:value={nombre}
-                class="form-control"
-                placeholder="Nombre de la Empresa"
-                required
-              />
-            </div>
-            <div class="mb-3">
-              <input
-                type="text"
-                bind:value={municipio}
-                class="form-control"
-                placeholder="Municipio o Ciudad"
-                required
-              />
-            </div>
-            <div class="mb-3">
-              <input
-                type="tel"
-                bind:value={numeroContacto}
-                class="form-control"
-                placeholder="Número de Contacto"
-                pattern="[0-9]*"
-                required
-              />
-            </div>
-          {/if}
-
-          <div class="mb-3">
-            <input
-              type="email"
-              bind:value={correo}
-              class="form-control"
-              placeholder="Correo electrónico"
-              required
-            />
-          </div>
-
-          <div class="input-group mb-2">
-            <input
-              type={mostrarClave ? "text" : "password"}
-              bind:value={contraseña}
-              class="form-control"
-              placeholder="Contraseña"
-              required
-              on:input={evaluarSeguridad}
-            />
+          <p class="text-center mb-0">
+            ¿No tienes cuenta?
             <button
               type="button"
-              class="btn btn-outline-secondary"
-              on:click={() => (mostrarClave = !mostrarClave)}
+              class="btn btn-link p-0 align-baseline"
+              on:click={() => (modo = "registro")}
             >
-              {#if mostrarClave}
-                <i class="fas fa-eye-slash"></i>
-              {:else}
-                <i class="fas fa-eye"></i>
-              {/if}
+              Regístrate
             </button>
-          </div>
-          <div class="progress mb-3">
-            <div
-              class="progress-bar"
-              role="progressbar"
-              style="width: {progresoSeguridad}%"
-              aria-valuenow={progresoSeguridad}
-              aria-valuemin="0"
-              aria-valuemax="100"
-            ></div>
-          </div>
+          </p>
+        {:else}
+          <h1 class="h4 text-center mb-4">Regístrate</h1>
+          <form on:submit|preventDefault={registrar}>
+            <div class="mb-3">
+              <!-- svelte-ignore a11y_label_has_associated_control -->
+              <label class="form-label">Tipo de Cuenta</label>
+              <select bind:value={tipoCuenta} class="form-select">
+                <option>Usuario</option>
+                <option>Empresa</option>
+              </select>
+            </div>
 
-          <button type="submit" class="btn btn-success w-100 mb-2">
-            <i class="fas fa-user-plus me-1"></i> Registrarse
-          </button>
-        </form>
-        <p class="text-center mb-0">
-          ¿Ya tienes cuenta?
-          <button
-            type="button"
-            class="btn btn-link p-0 align-baseline"
-            on:click={() => (modo = "login")}
-          >
-            Inicia Sesión
-          </button>
-        </p>
-      {/if}
+            {#if tipoCuenta === "Usuario"}
+              <div class="mb-3">
+                <input
+                  type="text"
+                  bind:value={nombre}
+                  class="form-control"
+                  placeholder="Nombre"
+                  required
+                />
+              </div>
+              <div class="mb-3">
+                <input
+                  type="text"
+                  bind:value={apellido}
+                  class="form-control"
+                  placeholder="Apellido"
+                  required
+                />
+              </div>
+              <div class="mb-3">
+                <input
+                  type="tel"
+                  bind:value={celular}
+                  class="form-control"
+                  placeholder="Celular"
+                  pattern="[0-9]*"
+                  required
+                />
+              </div>
+            {:else}
+              <div class="mb-3">
+                <input
+                  type="text"
+                  bind:value={nombre}
+                  class="form-control"
+                  placeholder="Nombre de la Empresa"
+                  required
+                />
+              </div>
+              <div class="mb-3">
+                <input
+                  type="text"
+                  bind:value={municipio}
+                  class="form-control"
+                  placeholder="Municipio o Ciudad"
+                  required
+                />
+              </div>
+              <div class="mb-3">
+                <input
+                  type="tel"
+                  bind:value={numeroContacto}
+                  class="form-control"
+                  placeholder="Número de Contacto"
+                  pattern="[0-9]*"
+                  required
+                />
+              </div>
+            {/if}
 
-      {#if mensaje}
-        <p class="text-center mt-3 text-danger">{mensaje}</p>
-      {/if}
+            <div class="mb-3">
+              <input
+                type="email"
+                bind:value={correo}
+                class="form-control"
+                placeholder="Correo electrónico"
+                required
+              />
+            </div>
+
+            <div class="input-group mb-2">
+              <input
+                type={mostrarClave ? "text" : "password"}
+                bind:value={contraseña}
+                class="form-control"
+                placeholder="Contraseña"
+                required
+                on:input={evaluarSeguridad}
+              />
+              <button
+                type="button"
+                class="btn btn-outline-secondary"
+                on:click={() => (mostrarClave = !mostrarClave)}
+              >
+                {#if mostrarClave}
+                  <i class="fas fa-eye-slash"></i>
+                {:else}
+                  <i class="fas fa-eye"></i>
+                {/if}
+              </button>
+            </div>
+            <div class="progress mb-3">
+              <div
+                class="progress-bar"
+                role="progressbar"
+                style="width: {progresoSeguridad}%"
+                aria-valuenow={progresoSeguridad}
+                aria-valuemin="0"
+                aria-valuemax="100"
+              ></div>
+            </div>
+
+            <button type="submit" class="btn btn-success w-100 mb-2">
+              <i class="fas fa-user-plus me-1"></i> Registrarse
+            </button>
+          </form>
+          <p class="text-center mb-0">
+            ¿Ya tienes cuenta?
+            <button
+              type="button"
+              class="btn btn-link p-0 align-baseline"
+              on:click={() => (modo = "login")}
+            >
+              Inicia Sesión
+            </button>
+          </p>
+        {/if}
+
+        {#if mensaje}
+          <p class="text-center mt-3 text-danger">{mensaje}</p>
+        {/if}
+      </div>
     </div>
-  </div>
-</main>
+  </main>
+</div>
 
 <style>
   @keyframes fadeIn {
