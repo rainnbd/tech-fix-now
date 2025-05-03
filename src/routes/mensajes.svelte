@@ -1,91 +1,29 @@
-<script>
-  import { auth } from "$lib/js/firebase";
-  import { onAuthStateChanged } from "firebase/auth";
-  import { goto } from "$app/navigation";
-  import firebase from "firebase/app";
-  import "firebase/firestore";
-
-  let usuario = null; // Usuario autenticado
-  let chats = []; // Lista de chats
-  let mensajeCargando = "Cargando los historiales de chats...";
-
-  // Recuperar el usuario autenticado
-  if (typeof window !== "undefined") {
-    onAuthStateChanged(auth, async (user) => {
-      if (user) {
-        usuario = user;
-        await cargarChats(); // Cargar los chats del usuario
-      } else {
-        usuario = null;
-        chats = [];
-        mensajeCargando = "Inicia sesión para ver tus chats.";
-      }
-    });
-  }
-
-  // Cargar chats desde Firestore
-  const cargarChats = async () => {
-    try {
-      const db = firebase.firestore();
-      const querySnapshot = await db
-        .collection("chats")
-        .where("participantes", "array-contains", usuario.uid)
-        .get();
-
-      chats = querySnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
-      mensajeCargando = chats.length > 0 ? "" : "Aún no tienes chats.";
-    } catch (error) {
-      mensajeCargando = `Error al cargar chats: ${error.message}`;
-    }
-  };
-
-  const abrirChat = (chatId) => {
-    goto(`/chat/${chatId}`); // Redirigir al chat específico
-  };
-</script>
-
 <main>
-  {#if usuario}
-    <div class="mensajes">
-      <h1>Mis Chats</h1>
-      <div class="lista-chats">
-        {#if chats.length > 0}
-          {#each chats as chat}
-            <button
-              class="chat"
-              on:click={() => abrirChat(chat.id)}
-              on:keydown={(event) => {
-                if (event.key === "Enter") abrirChat(chat.id);
-              }}
-            >
-              <img
-                src={chat.servicio.usuarioPublicador.foto}
-                alt="Foto del usuario"
-              />
-              <div class="detalle-chat">
-                <p><strong>Servicio:</strong> {chat.servicio.nombre}</p>
-                <p>
-                  <strong>Último mensaje:</strong>
-                  {chat.ultimoMensaje || "No hay mensajes aún."}
-                </p>
-              </div>
-            </button>
-          {/each}
-        {:else}
-          <p>{mensajeCargando}</p>
-        {/if}
-      </div>
-    </div>
-  {:else}
-    <div class="mensaje-autenticacion">
-      <h1>{mensajeCargando}</h1>
-    </div>
-  {/if}
-</main>
+  <div class="mensajes">
+    <h1>Mis Chats</h1>
+    <div class="lista-chats">
+      <!-- Ejemplo de chats estáticos -->
+      <button class="chat">
+        <img src="https://via.placeholder.com/50" alt="Foto del usuario" />
+        <div class="detalle-chat">
+          <p><strong>Servicio:</strong> Reparación de Computadores</p>
+          <p><strong>Último mensaje:</strong> "¿Cuándo podríamos agendar la revisión?"</p>
+        </div>
+      </button>
 
+      <button class="chat">
+        <img src="https://via.placeholder.com/50" alt="Foto del usuario" />
+        <div class="detalle-chat">
+          <p><strong>Servicio:</strong> Instalación de Cámaras de Seguridad</p>
+          <p><strong>Último mensaje:</strong> "Genial, mañana te envío la cotización."</p>
+        </div>
+      </button>
+    </div>
+  </div>
+</main>
 <style>
   main {
-    font-family: "Arial", sans-serif;
+    font-family: 'Arial', sans-serif;
     background-color: #f8f9fa;
     display: flex;
     justify-content: center;
@@ -93,6 +31,7 @@
     padding: 2rem;
     height: 100vh;
   }
+
   .mensajes {
     width: 100%;
     max-width: 600px;
@@ -104,6 +43,7 @@
     flex-direction: column;
     gap: 1rem;
   }
+
   .lista-chats {
     flex: 1;
     overflow-y: auto;
@@ -113,6 +53,7 @@
     border: 1px solid #ddd;
     border-radius: 5px;
   }
+
   .chat {
     display: flex;
     align-items: center;
@@ -121,33 +62,35 @@
     cursor: pointer;
     padding: 1rem;
     border-radius: 5px;
+    background: #f9f9f9;
     transition: background-color 0.3s;
   }
+
   .chat:hover {
-    background-color: #f1f1f1;
+    background-color: #e0e0e0;
   }
+
   .chat img {
     width: 50px;
     height: 50px;
     border-radius: 50%;
   }
+
   .detalle-chat {
     flex: 1;
     text-align: left;
   }
+
   .detalle-chat p {
     margin: 0;
     font-size: 1rem;
+    color: #333;
   }
-  .mensaje-autenticacion {
-    text-align: center;
-  }
+
   h1 {
     font-size: 2rem;
     margin-bottom: 1rem;
-  }
-  p {
-    font-size: 1.2rem;
-    color: #333;
+    text-align: center;
+    color: #0070f3;
   }
 </style>
