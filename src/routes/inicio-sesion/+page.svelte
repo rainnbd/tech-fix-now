@@ -1,4 +1,5 @@
 <script>
+  import "$lib/css/app.css";
   import { auth, googleProvider } from "$lib/js/firebase";
   import {
     createUserWithEmailAndPassword,
@@ -8,72 +9,60 @@
     sendEmailVerification,
   } from "firebase/auth";
 
-  let modo = "login"; // Alternar entre "login" y "registro"
-  let tipoCuenta = "Usuario"; // Tipo de cuenta seleccionado
-  let nombre = ""; // Nombre del usuario o empresa
-  let apellido = ""; // Apellido del usuario (solo para tipo Usuario)
-  let municipio = ""; // Ciudad o municipio (solo para tipo Empresa)
-  let numeroContacto = ""; // Número de contacto (solo para tipo Empresa)
-  let celular = ""; // Celular (solo para tipo Usuario)
-  let correo = ""; // Correo electrónico
-  let contraseña = ""; // Contraseña
-  let mostrarClave = false; // Mostrar u ocultar la contraseña
-  let progresoSeguridad = 0; // Barra de progreso de seguridad de la contraseña
-  let mensaje = ""; // Mensajes informativos
+  let modo = "login";
+  let tipoCuenta = "Usuario";
+  let nombre = "";
+  let apellido = "";
+  let municipio = "";
+  let numeroContacto = "";
+  let celular = "";
+  let correo = "";
+  let contraseña = "";
+  let mostrarClave = false;
+  let progresoSeguridad = 0;
+  let mensaje = "";
 
   const fotoPorDefecto =
     "https://static.vecteezy.com/system/resources/previews/016/753/870/original/default-profile-picture-ui-element-template-editable-isolated-dashboard-component-flat-user-interface-visual-data-presentation-web-design-widget-for-mobile-application-with-light-theme-vector.jpg";
 
-  // Evaluar la seguridad de la contraseña
   const evaluarSeguridad = () => {
-    progresoSeguridad = contraseña.length >= 8 ? 33 : 0; // Longitud mínima
-    progresoSeguridad += /[A-Z]/.test(contraseña) ? 33 : 0; // Al menos una mayúscula
-    progresoSeguridad += /[0-9]/.test(contraseña) ? 34 : 0; // Al menos un número
+    progresoSeguridad = contraseña.length >= 8 ? 33 : 0;
+    progresoSeguridad += /[A-Z]/.test(contraseña) ? 33 : 0;
+    progresoSeguridad += /[0-9]/.test(contraseña) ? 34 : 0;
   };
 
-  // Registrar usuario
   const registrar = async () => {
     if (progresoSeguridad < 100) {
       mensaje = "❌ Contraseña débil, mejore la contraseña.";
       return;
     }
     try {
-      const credenciales = await createUserWithEmailAndPassword(
+      const cred = await createUserWithEmailAndPassword(
         auth,
         correo,
         contraseña,
       );
-
       let displayName = "";
       if (tipoCuenta === "Usuario") {
-        displayName = `${nombre}`;
-        await updateProfile(credenciales.user, {
-          displayName: `${nombre} ${apellido}`,
-          photoURL: fotoPorDefecto,
-        });
-      } else if (tipoCuenta === "Empresa") {
+        displayName = `${nombre} ${apellido}`;
+      } else {
         displayName = nombre;
-        await updateProfile(credenciales.user, {
-          displayName,
-          photoURL: fotoPorDefecto,
-        });
       }
-
-      await sendEmailVerification(credenciales.user);
-
-      mensaje = `Registro exitoso. Se envió un correo de verificación a ${correo}.`;
-      setTimeout(() => {
-        window.location.href = "/verificacion"; // Redirigir a la página de verificación
-      }, 3000);
-    } catch (error) {
+      await updateProfile(cred.user, {
+        displayName,
+        photoURL: fotoPorDefecto,
+      });
+      await sendEmailVerification(cred.user);
+      mensaje = `✔️ Registro exitoso. Verifica tu correo: ${correo}.`;
+      setTimeout(() => (window.location.href = "/verificacion"), 3000);
+    } catch (e) {
       mensaje =
-        error.code === "auth/email-already-in-use"
-          ? "❗ Correo en uso, utilice otro."
-          : `Error al registrar usuario: ${error.message}`;
+        e.code === "auth/email-already-in-use"
+          ? "❗ Correo en uso, utiliza otro."
+          : `❌ Error: ${e.message}`;
     }
   };
 
-  // Iniciar sesión
   const iniciarSesion = async () => {
     try {
       const userCred = await signInWithEmailAndPassword(
@@ -81,268 +70,244 @@
         correo,
         contraseña,
       );
-      mensaje = `Inicio de sesión exitoso. Bienvenido, ${userCred.user.displayName || "Usuario"}.`;
-      window.location.href = "/perfil"; // Redirigir al perfil
-    } catch (error) {
+      mensaje = `✔️ Bienvenido, ${userCred.user.displayName || "Usuario"}`;
+      window.location.href = "/perfil";
+    } catch (e) {
       mensaje =
-        error.code === "auth/user-not-found"
-          ? "❗ Este correo no está asociado a ninguna cuenta."
-          : `Error al iniciar sesión: ${error.message}`;
+        e.code === "auth/user-not-found"
+          ? "❗ Este correo no está registrado."
+          : `❌ Error: ${e.message}`;
     }
   };
 
-  // Iniciar sesión con Google
   const iniciarConGoogle = async () => {
     try {
       const result = await signInWithPopup(auth, googleProvider);
-
       if (!result.user.photoURL) {
         const inicial = result.user.displayName.charAt(0).toUpperCase();
         const urlInicial = `https://via.placeholder.com/150/0070f3/FFFFFF?text=${inicial}`;
         await updateProfile(result.user, { photoURL: urlInicial });
       }
-
-      mensaje = `Inicio de sesión exitoso con Google. Bienvenido, ${result.user.displayName || "Usuario"}.`;
-      window.location.href = "/perfil"; // Redirigir al perfil
-    } catch (error) {
-      mensaje = `Error al iniciar sesión con Google: ${error.message}`;
+      mensaje = `✔️ Bienvenido, ${result.user.displayName || "Usuario"}`;
+      window.location.href = "/perfil";
+    } catch (e) {
+      mensaje = `❌ Error Google: ${e.message}`;
     }
   };
 </script>
 
-<main>
-  <div class="contenedor">
-    {#if modo === "login"}
-      <div class="login">
-        <h1>Inicia Sesión</h1>
+<main
+  class="container d-flex justify-content-center align-items-center min-vh-100"
+>
+  <div class="card shadow animate-fadeIn" style="max-width: 400px; width:100%;">
+    <div class="card-body">
+      {#if modo === "login"}
+        <h1 class="h4 text-center mb-4">Inicia Sesión</h1>
         <form on:submit|preventDefault={iniciarSesion}>
-          <input
-            type="email"
-            bind:value={correo}
-            placeholder="Correo electrónico"
-            required
-          />
-          <div class="contraseña">
+          <div class="mb-3">
+            <input
+              type="email"
+              bind:value={correo}
+              class="form-control"
+              placeholder="Correo electrónico"
+              required
+            />
+          </div>
+          <div class="input-group mb-3">
             <input
               type={mostrarClave ? "text" : "password"}
               bind:value={contraseña}
+              class="form-control"
               placeholder="Contraseña"
               required
             />
             <button
               type="button"
+              class="btn btn-outline-secondary"
               on:click={() => (mostrarClave = !mostrarClave)}
             >
-              {mostrarClave ? "Ocultar" : "Mostrar"}
+              {#if mostrarClave}
+                <i class="fas fa-eye-slash"></i>
+              {:else}
+                <i class="fas fa-eye"></i>
+              {/if}
             </button>
           </div>
-          <button type="submit">Iniciar Sesión</button>
+          <button type="submit" class="btn btn-primary w-100 mb-2">
+            <i class="fas fa-sign-in-alt me-1"></i> Iniciar Sesión
+          </button>
         </form>
-        <button on:click={iniciarConGoogle}>Iniciar sesión con Google</button>
-        <p>
-          ¿No tienes una cuenta? <button on:click={() => (modo = "registro")}
-            >Regístrate</button
+        <button
+          type="button"
+          class="btn btn-danger w-100 mb-3"
+          on:click={iniciarConGoogle}
+        >
+          <i class="fab fa-google me-1"></i> Iniciar con Google
+        </button>
+        <p class="text-center mb-0">
+          ¿No tienes cuenta?
+          <button
+            type="button"
+            class="btn btn-link p-0 align-baseline"
+            on:click={() => (modo = "registro")}
           >
+            Regístrate
+          </button>
         </p>
-      </div>
-    {:else if modo === "registro"}
-      <div class="registro">
-        <h1>Regístrate</h1>
+      {:else}
+        <h1 class="h4 text-center mb-4">Regístrate</h1>
         <form on:submit|preventDefault={registrar}>
-          <div class="tipo-cuenta">
-            <strong>Tipo de Cuenta:</strong>
-            <select bind:value={tipoCuenta}>
+          <div class="mb-3">
+            <!-- svelte-ignore a11y_label_has_associated_control -->
+            <label class="form-label">Tipo de Cuenta</label>
+            <select bind:value={tipoCuenta} class="form-select">
               <option>Usuario</option>
               <option>Empresa</option>
             </select>
           </div>
+
           {#if tipoCuenta === "Usuario"}
-            <input
-              type="text"
-              bind:value={nombre}
-              placeholder="Nombre"
-              required
-            />
-            <input
-              type="text"
-              bind:value={apellido}
-              placeholder="Apellido"
-              required
-            />
-            <input
-              type="text"
-              bind:value={celular}
-              placeholder="Celular"
-              pattern="[0-9]*"
-              required
-            />
+            <div class="mb-3">
+              <input
+                type="text"
+                bind:value={nombre}
+                class="form-control"
+                placeholder="Nombre"
+                required
+              />
+            </div>
+            <div class="mb-3">
+              <input
+                type="text"
+                bind:value={apellido}
+                class="form-control"
+                placeholder="Apellido"
+                required
+              />
+            </div>
+            <div class="mb-3">
+              <input
+                type="tel"
+                bind:value={celular}
+                class="form-control"
+                placeholder="Celular"
+                pattern="[0-9]*"
+                required
+              />
+            </div>
           {:else}
-            <input
-              type="text"
-              bind:value={nombre}
-              placeholder="Nombre de la Empresa"
-              required
-            />
-            <input
-              type="text"
-              bind:value={municipio}
-              placeholder="Municipio o Ciudad"
-              required
-            />
-            <input
-              type="text"
-              bind:value={numeroContacto}
-              placeholder="Número de Contacto"
-              pattern="[0-9]*"
-              required
-            />
+            <div class="mb-3">
+              <input
+                type="text"
+                bind:value={nombre}
+                class="form-control"
+                placeholder="Nombre de la Empresa"
+                required
+              />
+            </div>
+            <div class="mb-3">
+              <input
+                type="text"
+                bind:value={municipio}
+                class="form-control"
+                placeholder="Municipio o Ciudad"
+                required
+              />
+            </div>
+            <div class="mb-3">
+              <input
+                type="tel"
+                bind:value={numeroContacto}
+                class="form-control"
+                placeholder="Número de Contacto"
+                pattern="[0-9]*"
+                required
+              />
+            </div>
           {/if}
-          <input
-            type="email"
-            bind:value={correo}
-            placeholder="Correo electrónico"
-            required
-          />
-          <div class="contraseña">
+
+          <div class="mb-3">
+            <input
+              type="email"
+              bind:value={correo}
+              class="form-control"
+              placeholder="Correo electrónico"
+              required
+            />
+          </div>
+
+          <div class="input-group mb-2">
             <input
               type={mostrarClave ? "text" : "password"}
               bind:value={contraseña}
+              class="form-control"
               placeholder="Contraseña"
               required
               on:input={evaluarSeguridad}
             />
             <button
               type="button"
+              class="btn btn-outline-secondary"
               on:click={() => (mostrarClave = !mostrarClave)}
             >
-              {mostrarClave ? "Ocultar" : "Mostrar"}
+              {#if mostrarClave}
+                <i class="fas fa-eye-slash"></i>
+              {:else}
+                <i class="fas fa-eye"></i>
+              {/if}
             </button>
           </div>
-          <div class="barra">
-            <div class="progreso" style="width: {progresoSeguridad}%;"></div>
+          <div class="progress mb-3">
+            <div
+              class="progress-bar"
+              role="progressbar"
+              style="width: {progresoSeguridad}%"
+              aria-valuenow={progresoSeguridad}
+              aria-valuemin="0"
+              aria-valuemax="100"
+            ></div>
           </div>
-          <button type="submit">Registrarse</button>
+
+          <button type="submit" class="btn btn-success w-100 mb-2">
+            <i class="fas fa-user-plus me-1"></i> Registrarse
+          </button>
         </form>
-        <p>
-          ¿Ya tienes una cuenta? <button on:click={() => (modo = "login")}
-            >Inicia Sesión</button
+        <p class="text-center mb-0">
+          ¿Ya tienes cuenta?
+          <button
+            type="button"
+            class="btn btn-link p-0 align-baseline"
+            on:click={() => (modo = "login")}
           >
+            Inicia Sesión
+          </button>
         </p>
-      </div>
-    {/if}
-    <p class="mensaje">{mensaje}</p>
+      {/if}
+
+      {#if mensaje}
+        <p class="text-center mt-3 text-danger">{mensaje}</p>
+      {/if}
+    </div>
   </div>
 </main>
 
 <style>
-  main {
-    height: 100vh;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    background: linear-gradient(to bottom, #0070f3, #48bb78);
-    font-family: "Arial", sans-serif;
-    margin: 0;
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
   }
-  .contenedor {
-    background-color: white;
-    padding: 3rem;
-    border-radius: 15px;
-    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
-    max-width: 450px;
-    width: 100%;
-    text-align: center;
+  .animate-fadeIn {
+    opacity: 0;
+    animation: fadeIn 0.6s ease-out forwards;
   }
-  h1 {
-    font-size: 2rem;
-    margin-bottom: 1.5rem;
-    color: #333;
-  }
-  input,
-  select {
-    width: calc(100% - 2rem);
-    margin: 0.5rem auto;
-    padding: 0.8rem;
-    border-radius: 5px;
-    border: 1px solid #ced4da;
-    display: block;
-    font-size: 1rem;
-  }
-  .contraseña {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    width: calc(100% - 2rem);
-    margin: auto;
-  }
-  .contraseña input {
-    width: 80%;
-  }
-  button {
-    width: calc(100% - 2rem);
-    margin: 0.5rem auto;
-    padding: 0.8rem;
-    border-radius: 5px;
-    border: none;
-    font-size: 1rem;
-    cursor: pointer;
-    transition: all 0.3s;
-  }
-  button[type="submit"],
-  button[type="button"] {
-    background-color: #0070f3;
-    color: white;
-  }
-  button:hover {
-    background-color: #005bb5;
-  }
-  button:disabled {
-    background-color: #d6d6d6;
-    cursor: not-allowed;
-  }
-  .barra {
-    background-color: #e0e0e0;
-    border-radius: 10px;
-    height: 10px;
-    margin: 1rem auto;
-    position: relative;
-    width: calc(100% - 2rem);
-  }
-  .progreso {
-    background-color: #0070f3;
-    height: 100%;
-    border-radius: 10px;
-    transition: width 0.3s ease-in-out;
-  }
-  .mensaje {
-    margin-top: 1rem;
-    color: #666;
-  }
-  .tipo-cuenta {
-    margin: 1rem 0;
-    text-align: left;
-    font-size: 1rem;
-  }
-  .tipo-cuenta strong {
-    display: block;
-    margin-bottom: 0.5rem;
-    color: #333;
-  }
-  p {
-    margin: 1rem 0;
-    color: #333;
-  }
-  p button {
-    background: none;
-    border: none;
-    color: #0070f3;
-    font-size: 1rem;
-    padding: 0;
-    cursor: pointer;
-    text-decoration: underline;
-    transition: color 0.3s;
-  }
-  p button:hover {
-    color: #005bb5;
+  .btn:hover {
+    transform: scale(1.05);
+    transition: transform 0.2s ease;
   }
 </style>
