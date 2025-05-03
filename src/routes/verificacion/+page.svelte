@@ -1,4 +1,5 @@
 <script>
+  import "$lib/css/app.css";
   import { auth } from "$lib/js/firebase";
   import { onAuthStateChanged } from "firebase/auth";
 
@@ -54,57 +55,67 @@
   }
 </script>
 
-<main>
-  <div class="verificacion">
-    <h1>Verificación de Correo</h1>
-    <p>{mensaje}</p>
-    <div class="barra">
-      <div
-        class="progreso"
-        style="width: {((180 - tiempoRestante) / 180) * 100}%;"
-      ></div>
+<main
+  class="container d-flex justify-content-center align-items-center min-vh-100"
+>
+  <div
+    class="card shadow verify-card animate-fadeIn"
+    style="max-width: 400px; width: 100%;"
+  >
+    <div class="card-body text-center p-4">
+      <h1 class="h4 mb-3">
+        <i class="fas fa-envelope-open-text text-primary me-2"></i>
+        Verificación de Correo
+      </h1>
+      <p class="mb-4">{mensaje}</p>
+
+      <!-- Barra de progreso Bootstrap -->
+      <div class="progress mb-2" style="height: 1rem;">
+        <div
+          class="progress-bar progress-bar-striped progress-bar-animated"
+          role="progressbar"
+          style="width: {((180 - tiempoRestante) / 180) * 100}%;"
+          aria-valuenow={((180 - tiempoRestante) / 180) * 100}
+          aria-valuemin="0"
+          aria-valuemax="100"
+        ></div>
+      </div>
+
+      <p class="text-muted">
+        <i class="fas fa-clock me-1"></i>
+        Tiempo restante:
+        <strong>
+          {Math.floor(tiempoRestante / 60)}:
+          {String(tiempoRestante % 60).padStart(2, "0")}
+        </strong>
+      </p>
     </div>
-    <p>
-      Tiempo restante: {Math.floor(tiempoRestante / 60)}:{String(
-        tiempoRestante % 60,
-      ).padStart(2, "0")}
-    </p>
   </div>
 </main>
 
 <style>
-  main {
-    text-align: center;
-    font-family: "Arial", sans-serif;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
+  /* Fade‑in al cargar la tarjeta */
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(15px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
   }
-  .verificacion {
-    background-color: #f9f9f9;
-    padding: 2rem;
-    border-radius: 10px;
-    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
-    max-width: 400px;
-    width: 100%;
+  .animate-fadeIn {
+    opacity: 0;
+    animation: fadeIn 0.6s ease-out forwards;
   }
-  .barra {
-    background-color: #e0e0e0;
-    border-radius: 10px;
-    height: 10px;
-    margin: 1rem 0;
-    width: 100%;
-    position: relative;
-  }
-  .progreso {
-    background-color: #0070f3;
-    height: 100%;
-    border-radius: 10px;
-    transition: width 1s ease-in-out;
-  }
-  p {
-    margin: 1rem 0;
-    color: #333;
+
+  /* Sutil efecto hover en la tarjeta */
+  .verify-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
+    transition:
+      transform 0.3s ease,
+      box-shadow 0.3s ease;
   }
 </style>

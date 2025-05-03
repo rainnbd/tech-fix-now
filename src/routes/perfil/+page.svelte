@@ -1,4 +1,5 @@
 <script>
+  import "$lib/css/app.css";
   import { auth } from "$lib/js/firebase";
   import {
     signOut,
@@ -114,186 +115,191 @@
   };
 </script>
 
-<main class="container py-5 d-flex justify-content-center">
-  <div class="card shadow profile-card">
-    <div class="card-body">
-      <div class="text-center">
-        <img
-          src={imagen}
-          alt="Foto de perfil"
-          class="rounded-circle mb-3"
-          style="width:150px; height:150px; object-fit:cover; border:4px solid #0d6efd;"
-        />
-        <div class="btn-group mb-3" role="group">
-          <button
-            class="btn btn-outline-primary"
-            on:click={() => document.querySelector("#uploadInput").click()}
-          >
-            <i class="fas fa-camera"></i> Cambiar
-          </button>
-          <button
-            class="btn btn-outline-danger"
-            on:click={() => (imagen = fotoPorDefecto)}
-          >
-            <i class="fas fa-trash-alt"></i> Eliminar
-          </button>
+<div class="bg-secondary">
+  <div class="container py-5 d-flex justify-content-center">
+    <div class="card shadow profile-card">
+      <div class="card-body">
+        <div class="text-center">
+          <img
+            src={imagen}
+            alt="Foto de perfil"
+            class="rounded-circle mb-3"
+            style="width:150px; height:150px; object-fit:cover; border:4px solid #0d6efd;"
+          />
+          <div class="btn-group mb-3" role="group">
+            <button
+              class="btn btn-outline-primary"
+              on:click={() => document.querySelector("#uploadInput").click()}
+            >
+              <i class="fas fa-camera"></i> Cambiar
+            </button>
+            <button
+              class="btn btn-outline-danger"
+              on:click={() => (imagen = fotoPorDefecto)}
+            >
+              <i class="fas fa-trash-alt"></i> Eliminar
+            </button>
+          </div>
+          <input
+            id="uploadInput"
+            type="file"
+            accept="image/*"
+            on:change={cambiarFoto}
+            hidden
+          />
         </div>
-        <input
-          id="uploadInput"
-          type="file"
-          accept="image/*"
-          on:change={cambiarFoto}
-          hidden
-        />
-      </div>
 
-      <h3 class="card-title text-center mb-4">
-        {#if tipoCuenta === "Usuario"}
-          {nombre} {apellido}
-        {:else}
-          {nombre}
-        {/if}
-      </h3>
-
-      <div class="row gx-3 gy-3">
-        <div class="col-12">
-          <i class="fas fa-envelope me-2"></i>
-          {correo}
-          {#if correoVerificado}
-            <i class="fas fa-check-circle text-success ms-2"></i>
+        <h3 class="card-title text-center mb-4">
+          {#if tipoCuenta === "Usuario"}
+            {nombre} {apellido}
           {:else}
-            <i class="fas fa-times-circle text-danger ms-2"></i>
+            {nombre}
           {/if}
-        </div>
+        </h3>
 
-        <div class="col-md-6">
-          <strong>Tipo de Cuenta:</strong>
-          {#if editandoDatos}
-            <select bind:value={tipoCuenta} class="form-select form-select-sm">
-              <option>Usuario</option>
-              <option>Empresa</option>
-            </select>
-          {:else}
-            <span>{tipoCuenta}</span>
-          {/if}
-        </div>
+        <div class="row gx-3 gy-3">
+          <div class="col-12">
+            <i class="fas fa-envelope me-2"></i>
+            {correo}
+            {#if correoVerificado}
+              <i class="fas fa-check-circle text-success ms-2"></i>
+            {:else}
+              <i class="fas fa-times-circle text-danger ms-2"></i>
+            {/if}
+          </div>
 
-        {#if tipoCuenta === "Usuario"}
           <div class="col-md-6">
-            <strong>Género:</strong>
+            <strong>Tipo de Cuenta:</strong>
             {#if editandoDatos}
-              <select bind:value={genero} class="form-select form-select-sm">
-                <option>Masculino</option>
-                <option>Femenino</option>
+              <select
+                bind:value={tipoCuenta}
+                class="form-select form-select-sm"
+              >
+                <option>Usuario</option>
+                <option>Empresa</option>
               </select>
             {:else}
-              <span>{genero}</span>
+              <span>{tipoCuenta}</span>
             {/if}
           </div>
 
-          <div class="col-md-6">
-            <strong>Ciudad / Municipio:</strong>
-            {#if editandoDatos}
-              <input
-                type="text"
-                bind:value={ciudadMunicipio}
-                class="form-control form-control-sm"
-                placeholder="Ciudad o Municipio"
-              />
-            {:else}
-              <span>{ciudadMunicipio}</span>
-            {/if}
-          </div>
+          {#if tipoCuenta === "Usuario"}
+            <div class="col-md-6">
+              <strong>Género:</strong>
+              {#if editandoDatos}
+                <select bind:value={genero} class="form-select form-select-sm">
+                  <option>Masculino</option>
+                  <option>Femenino</option>
+                </select>
+              {:else}
+                <span>{genero}</span>
+              {/if}
+            </div>
 
-          <div class="col-md-6">
-            <strong>Celular:</strong>
-            {#if editandoDatos}
-              <input
-                type="tel"
-                bind:value={celular}
-                class="form-control form-control-sm"
-                placeholder="Celular"
-              />
-            {:else}
-              <span>{celular}</span>
-            {/if}
-          </div>
+            <div class="col-md-6">
+              <strong>Ciudad / Municipio:</strong>
+              {#if editandoDatos}
+                <input
+                  type="text"
+                  bind:value={ciudadMunicipio}
+                  class="form-control form-control-sm"
+                  placeholder="Ciudad o Municipio"
+                />
+              {:else}
+                <span>{ciudadMunicipio}</span>
+              {/if}
+            </div>
 
-          <div class="col-md-6">
-            <strong>Fecha Nac.:</strong>
-            {#if editandoDatos}
-              <input
-                type="date"
-                bind:value={fechaNacimiento}
-                class="form-control form-control-sm"
-              />
-            {:else}
-              <span>{fechaNacimiento || "No especificada"}</span>
-            {/if}
-          </div>
-        {:else}
-          <div class="col-md-6">
-            <strong>Dirección:</strong>
-            {#if editandoDatos}
-              <input
-                type="text"
-                bind:value={direccion}
-                class="form-control form-control-sm"
-                placeholder="Dirección"
-              />
-            {:else}
-              <span>{direccion}</span>
-            {/if}
-          </div>
-          <div class="col-md-6">
-            <strong>Contacto:</strong>
-            {#if editandoDatos}
-              <input
-                type="tel"
-                bind:value={numeroContacto}
-                class="form-control form-control-sm"
-                placeholder="Número de Contacto"
-              />
-            {:else}
-              <span>{numeroContacto}</span>
-            {/if}
-          </div>
+            <div class="col-md-6">
+              <strong>Celular:</strong>
+              {#if editandoDatos}
+                <input
+                  type="tel"
+                  bind:value={celular}
+                  class="form-control form-control-sm"
+                  placeholder="Celular"
+                />
+              {:else}
+                <span>{celular}</span>
+              {/if}
+            </div>
+
+            <div class="col-md-6">
+              <strong>Fecha Nac.:</strong>
+              {#if editandoDatos}
+                <input
+                  type="date"
+                  bind:value={fechaNacimiento}
+                  class="form-control form-control-sm"
+                />
+              {:else}
+                <span>{fechaNacimiento || "No especificada"}</span>
+              {/if}
+            </div>
+          {:else}
+            <div class="col-md-6">
+              <strong>Dirección:</strong>
+              {#if editandoDatos}
+                <input
+                  type="text"
+                  bind:value={direccion}
+                  class="form-control form-control-sm"
+                  placeholder="Dirección"
+                />
+              {:else}
+                <span>{direccion}</span>
+              {/if}
+            </div>
+            <div class="col-md-6">
+              <strong>Contacto:</strong>
+              {#if editandoDatos}
+                <input
+                  type="tel"
+                  bind:value={numeroContacto}
+                  class="form-control form-control-sm"
+                  placeholder="Número de Contacto"
+                />
+              {:else}
+                <span>{numeroContacto}</span>
+              {/if}
+            </div>
+          {/if}
+        </div>
+
+        <div class="d-flex justify-content-center mt-4">
+          {#if editandoDatos}
+            <button class="btn btn-success me-2" on:click={guardarDatos}>
+              <i class="fas fa-save"></i> Guardar
+            </button>
+            <button
+              class="btn btn-secondary"
+              on:click={() => (editandoDatos = false)}
+            >
+              <i class="fas fa-ban"></i> Cancelar
+            </button>
+          {:else}
+            <button
+              class="btn btn-primary me-2"
+              on:click={() => (editandoDatos = true)}
+            >
+              <i class="fas fa-edit"></i> Editar
+            </button>
+            <button class="btn btn-danger me-2" on:click={eliminarCuenta}>
+              <i class="fas fa-user-times"></i> Eliminar Cuenta
+            </button>
+            <button class="btn btn-outline-dark" on:click={cerrarSesion}>
+              <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
+            </button>
+          {/if}
+        </div>
+
+        {#if mensaje}
+          <p class="text-center mt-3 fw-bold">{mensaje}</p>
         {/if}
       </div>
-
-      <div class="d-flex justify-content-center mt-4">
-        {#if editandoDatos}
-          <button class="btn btn-success me-2" on:click={guardarDatos}>
-            <i class="fas fa-save"></i> Guardar
-          </button>
-          <button
-            class="btn btn-secondary"
-            on:click={() => (editandoDatos = false)}
-          >
-            <i class="fas fa-ban"></i> Cancelar
-          </button>
-        {:else}
-          <button
-            class="btn btn-primary me-2"
-            on:click={() => (editandoDatos = true)}
-          >
-            <i class="fas fa-edit"></i> Editar
-          </button>
-          <button class="btn btn-danger me-2" on:click={eliminarCuenta}>
-            <i class="fas fa-user-times"></i> Eliminar Cuenta
-          </button>
-          <button class="btn btn-outline-dark" on:click={cerrarSesion}>
-            <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
-          </button>
-        {/if}
-      </div>
-
-      {#if mensaje}
-        <p class="text-center mt-3 fw-bold">{mensaje}</p>
-      {/if}
     </div>
   </div>
-</main>
+</div>
 
 <style>
   @keyframes fadeIn {
