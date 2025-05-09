@@ -84,10 +84,10 @@
           <i class="fas fa-plus-circle me-2"></i>
           Publicar Servicio
         </a>
-        <a href="/mensajes" class="btn btn-info text-white">
+        <!-- <a href="/mensajes" class="btn btn-info text-white">
           <i class="fas fa-comments me-2"></i>
           Chats
-        </a>
+        </a> -->
       </div>
 
       <section class="servicios">
