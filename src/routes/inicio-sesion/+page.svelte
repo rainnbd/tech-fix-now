@@ -1,6 +1,6 @@
 <script>
   import "$lib/css/app.css";
-  import { auth, googleProvider } from "$lib/js/firebase";
+  import { auth, googleProvider, db } from "$lib/js/firebase";
   import {
     createUserWithEmailAndPassword,
     updateProfile,
@@ -8,6 +8,7 @@
     signInWithPopup,
     sendEmailVerification,
   } from "firebase/auth";
+  import { doc, setDoc, serverTimestamp } from "firebase/firestore";
 
   let modo = "login";
   let tipoCuenta = "Usuario";
@@ -16,11 +17,14 @@
   let municipio = "";
   let numeroContacto = "";
   let celular = "";
+  let genero = "";
+  let fechaNacimiento = "";
   let correo = "";
   let contraseña = "";
   let mostrarClave = false;
   let progresoSeguridad = 0;
   let mensaje = "";
+  let fotoUrl = "";
 
   const fotoPorDefecto =
     "https://static.vecteezy.com/system/resources/previews/016/753/870/original/default-profile-picture-ui-element-template-editable-isolated-dashboard-component-flat-user-interface-visual-data-presentation-web-design-widget-for-mobile-application-with-light-theme-vector.jpg";
@@ -37,21 +41,39 @@
       return;
     }
     try {
+      // Crear usuario en Authentication
       const cred = await createUserWithEmailAndPassword(
         auth,
         correo,
         contraseña,
       );
-      let displayName = "";
-      if (tipoCuenta === "Usuario") {
-        displayName = `${nombre} ${apellido}`;
-      } else {
-        displayName = nombre;
-      }
+
+      // Actualizar perfil en Auth
+      const displayName =
+        tipoCuenta === "Usuario" ? `${nombre} ${apellido}` : nombre;
       await updateProfile(cred.user, {
         displayName,
-        photoURL: fotoPorDefecto,
+        photoURL: fotoUrl || fotoPorDefecto,
       });
+
+      // Crear documento en Firestore
+      const userData = {
+        nombres: nombre,
+        apellidos: tipoCuenta === "Usuario" ? apellido : null,
+        tipoCuenta,
+        celular: tipoCuenta === "Usuario" ? celular : null,
+        genero: tipoCuenta === "Usuario" ? genero : null,
+        fechaNacimiento: tipoCuenta === "Usuario" ? fechaNacimiento : null,
+        foto: fotoUrl || fotoPorDefecto,
+        correo,
+        municipio: tipoCuenta === "Empresa" ? municipio : null,
+        numeroContacto: tipoCuenta === "Empresa" ? numeroContacto : null,
+        fechaRegistro: serverTimestamp(),
+        uid: cred.user.uid,
+      };
+
+      await setDoc(doc(db, "Register", cred.user.uid), userData);
+
       await sendEmailVerification(cred.user);
       mensaje = `✔️ Registro exitoso. Verifica tu correo: ${correo}.`;
       setTimeout(() => (window.location.href = "/verificacion"), 3000);
@@ -83,11 +105,21 @@
   const iniciarConGoogle = async () => {
     try {
       const result = await signInWithPopup(auth, googleProvider);
-      if (!result.user.photoURL) {
-        const inicial = result.user.displayName.charAt(0).toUpperCase();
-        const urlInicial = `https://via.placeholder.com/150/0070f3/FFFFFF?text=${inicial}`;
-        await updateProfile(result.user, { photoURL: urlInicial });
-      }
+
+      // Crear/Actualizar perfil en Firestore
+      await setDoc(
+        doc(db, "Register", result.user.uid),
+        {
+          nombres: result.user.displayName,
+          tipoCuenta: "Usuario",
+          foto: result.user.photoURL || fotoPorDefecto,
+          correo: result.user.email,
+          fechaRegistro: serverTimestamp(),
+          uid: result.user.uid,
+        },
+        { merge: true },
+      );
+
       mensaje = `✔️ Bienvenido, ${result.user.displayName || "Usuario"}`;
       window.location.href = "/perfil";
     } catch (e) {
@@ -162,11 +194,10 @@
           <h1 class="h4 text-center mb-4">Regístrate</h1>
           <form on:submit|preventDefault={registrar}>
             <div class="mb-3">
-              <!-- svelte-ignore a11y_label_has_associated_control -->
               <label class="form-label">Tipo de Cuenta</label>
-              <select bind:value={tipoCuenta} class="form-select">
-                <option>Usuario</option>
-                <option>Empresa</option>
+              <select bind:value={tipoCuenta} class="form-select" required>
+                <option value="Usuario">Usuario</option>
+                <option value="Empresa">Empresa</option>
               </select>
             </div>
 
@@ -187,6 +218,25 @@
                   class="form-control"
                   placeholder="Apellido"
                   required
+                />
+              </div>
+              <div class="mb-3">
+                <select bind:value={genero} class="form-select" required>
+                  <option value="" disabled selected
+                    >Selecciona tu género</option
+                  >
+                  <option>Hombre</option>
+                  <option>Mujer</option>
+                  <option>Otro</option>
+                </select>
+              </div>
+              <div class="mb-3">
+                <input
+                  type="date"
+                  bind:value={fechaNacimiento}
+                  class="form-control"
+                  required
+                  max={new Date().toISOString().split("T")[0]}
                 />
               </div>
               <div class="mb-3">
@@ -237,6 +287,15 @@
                 class="form-control"
                 placeholder="Correo electrónico"
                 required
+              />
+            </div>
+
+            <div class="mb-3">
+              <input
+                type="url"
+                bind:value={fotoUrl}
+                class="form-control"
+                placeholder="URL de foto de perfil (opcional)"
               />
             </div>
 
@@ -314,5 +373,8 @@
   .btn:hover {
     transform: scale(1.05);
     transition: transform 0.2s ease;
+  }
+  .progress-bar {
+    transition: width 0.3s ease;
   }
 </style>
