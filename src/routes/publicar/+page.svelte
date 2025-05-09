@@ -1,162 +1,318 @@
-<main>
-  <div class="publicar">
-    <h1>Publicar Servicio</h1>
-    <form>
-      <div class="campo">
-        <label for="nombre">Nombre del Servicio:</label>
-        <input type="text" id="nombre" placeholder="Ej: Reparación de Computadores" required />
-      </div>
+<script>
+  import { auth, db } from "$lib/js/firebase";
+  import { addDoc, collection, serverTimestamp } from "firebase/firestore";
+  import { onMount } from "svelte";
 
-      <div class="campo">
-        <label for="categoria">Categoría:</label>
-        <select id="categoria" required>
-          <option value="" disabled selected>Selecciona una categoría</option>
-          <option>Electrodomésticos</option>
-          <option>Celulares</option>
-          <option>Computadores</option>
-          <option>Portátiles</option>
-          <option>Software</option>
-          <option>Hardware</option>
-          <option>Instalaciones</option>
-          <option>Tecnología Varia</option>
-          <option>Otros</option>
-        </select>
-      </div>
+  let nombre = "";
+  let categoria = "";
+  let descripcion = "";
+  let departamento = "";
+  let ciudad = "";
+  let precio = 0;
+  let newPhotoUrl = "";
+  let fotos = [];
+  let email = "";
+  let telefono = "";
+  let loading = false;
+  let error = null;
 
-      <div class="campo">
-        <label for="descripcion">Descripción:</label>
-        <textarea id="descripcion" placeholder="Describe tu servicio..." required></textarea>
-      </div>
+  const categorias = [
+    "Electrodomésticos",
+    "Celulares",
+    "Computadores",
+    "Portátiles",
+    "Software",
+    "Hardware",
+    "Instalaciones",
+    "Tecnología Varia",
+    "Otros",
+  ];
 
-      <div class="campo">
-        <label for="fotos">Subir Fotos (Máximo 3):</label>
-        <input type="file" id="fotos" accept="image/*" multiple />
-        <div class="fotos">
-          <div class="foto">
-            <img src="https://via.placeholder.com/100" alt="Vista previa" />
-            <button type="button">Eliminar</button>
+  const departamentos = ["Antioquia", "Cundinamarca", "Valle del Cauca"];
+
+  const ciudadesPorDepto = {
+    Antioquia: ["Medellín"],
+    Cundinamarca: ["Bogotá"],
+    "Valle del Cauca": ["Cali"],
+  };
+
+  $: ciudades = departamento ? ciudadesPorDepto[departamento] : [];
+
+  function addPhoto() {
+    const url = newPhotoUrl.trim();
+    if (!url) return;
+    if (fotos.length >= 3) {
+      alert("Solo puedes agregar hasta 3 fotos.");
+      return;
+    }
+    if (!isValidUrl(url)) {
+      alert("Por favor ingresa una URL válida");
+      return;
+    }
+    fotos = [...fotos, url];
+    newPhotoUrl = "";
+  }
+
+  function removePhoto(idx) {
+    fotos = fotos.filter((_, i) => i !== idx);
+  }
+
+  function isValidUrl(string) {
+    try {
+      new URL(string);
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  async function publicar() {
+    try {
+      loading = true;
+      error = null;
+
+      if (!auth.currentUser) throw new Error("Debes iniciar sesión primero");
+      if (fotos.length === 0)
+        throw new Error("Debes agregar al menos una foto");
+      if (!departamento || !ciudad)
+        throw new Error("Selecciona ubicación completa");
+
+      const nuevaPublicacion = {
+        nombre,
+        categoria: [categoria],
+        descripcion,
+        departamento: [departamento],
+        ciudad: [ciudad],
+        foto: fotos[0],
+        fotos,
+        precio: Number(precio),
+        email,
+        telefono,
+        usuariopubli: auth.currentUser.uid,
+        createdAt: serverTimestamp(),
+        isActive: true,
+      };
+
+      const docRef = await addDoc(
+        collection(db, "publicarservicios"),
+        nuevaPublicacion,
+      );
+
+      // Resetear
+      nombre =
+        categoria =
+        descripcion =
+        departamento =
+        ciudad =
+        email =
+        telefono =
+          "";
+      precio = 0;
+      fotos = [];
+
+      alert(`¡Publicación exitosa! ID: ${docRef.id}`);
+    } catch (err) {
+      error = err.message;
+      console.error("Error al publicar:", err);
+    } finally {
+      loading = false;
+    }
+  }
+</script>
+
+<main class="container py-5">
+  <div class="card shadow-lg fade-in publicar">
+    <div class="card-body">
+      <h1 class="card-title mb-4">
+        <i class="fas fa-upload me-2"></i>Publicar Servicio
+      </h1>
+
+      {#if error}
+        <div class="alert alert-danger mb-4">
+          <i class="fas fa-exclamation-triangle me-2"></i>{error}
+        </div>
+      {/if}
+
+      <form on:submit|preventDefault={publicar}>
+        <div class="row g-3">
+          <div class="col-12 col-md-6">
+            <label class="form-label">Nombre del Servicio</label>
+            <div class="input-group mb-3">
+              <span class="input-group-text"><i class="fas fa-tag"></i></span>
+              <input
+                class="form-control"
+                type="text"
+                bind:value={nombre}
+                placeholder="Ej: Reparación de Computadores"
+                required
+              />
+            </div>
+          </div>
+
+          <div class="col-12 col-md-6">
+            <label class="form-label">Categoría</label>
+            <div class="input-group mb-3">
+              <span class="input-group-text"><i class="fas fa-list"></i></span>
+              <select class="form-select" bind:value={categoria} required>
+                <option value="" disabled selected
+                  >Selecciona una categoría</option
+                >
+                {#each categorias as cat}
+                  <option value={cat}>{cat}</option>
+                {/each}
+              </select>
+            </div>
+          </div>
+
+          <div class="col-12 col-md-6">
+            <label class="form-label">Precio (COP)</label>
+            <div class="input-group mb-3">
+              <span class="input-group-text"
+                ><i class="fas fa-dollar-sign"></i></span
+              >
+              <input
+                class="form-control"
+                type="number"
+                bind:value={precio}
+                min="0"
+                step="1000"
+                required
+              />
+            </div>
+          </div>
+
+          <div class="col-12 col-md-6">
+            <label class="form-label">Correo electrónico</label>
+            <div class="input-group mb-3">
+              <span class="input-group-text"
+                ><i class="fas fa-envelope"></i></span
+              >
+              <input
+                class="form-control"
+                type="email"
+                bind:value={email}
+                placeholder="tucorreo@ejemplo.com"
+                required
+              />
+            </div>
+          </div>
+
+          <div class="col-12 col-md-6">
+            <label class="form-label">Número telefónico</label>
+            <div class="input-group mb-3">
+              <span class="input-group-text"><i class="fas fa-phone"></i></span>
+              <input
+                class="form-control"
+                type="tel"
+                bind:value={telefono}
+                placeholder="Ej: 3001234567"
+                required
+              />
+            </div>
+          </div>
+
+          <div class="col-12">
+            <label class="form-label">Descripción</label>
+            <textarea
+              class="form-control mb-3"
+              rows="4"
+              bind:value={descripcion}
+              placeholder="Describe tu servicio..."
+              required
+            ></textarea>
+          </div>
+
+          <div class="col-12">
+            <label class="form-label">Subir Fotos (Máximo 3 URLs)</label>
+            <div class="input-group mb-3">
+              <span class="input-group-text"><i class="fas fa-image"></i></span>
+              <input
+                class="form-control"
+                type="url"
+                bind:value={newPhotoUrl}
+                placeholder="https://ejemplo.com/imagen.jpg"
+              />
+              <button
+                type="button"
+                class="btn btn-primary"
+                on:click={addPhoto}
+                disabled={fotos.length >= 3}
+              >
+                <i class="fas fa-plus"></i>
+              </button>
+            </div>
+            <div class="row row-cols-2 row-cols-md-3 g-3 fotos">
+              {#each fotos as url, i}
+                <div class="col foto">
+                  <img src={url} alt="Vista previa" class="img-fluid rounded" />
+                  <button
+                    type="button"
+                    class="btn btn-sm btn-danger"
+                    on:click={() => removePhoto(i)}
+                  >
+                    <i class="fas fa-trash"></i>
+                  </button>
+                </div>
+              {/each}
+            </div>
+          </div>
+
+          <div class="col-12 col-md-6">
+            <label class="form-label">Departamento</label>
+            <div class="input-group mb-3">
+              <span class="input-group-text"
+                ><i class="fas fa-map-marker-alt"></i></span
+              >
+              <select class="form-select" bind:value={departamento} required>
+                <option value="" disabled selected
+                  >Selecciona un departamento</option
+                >
+                {#each departamentos as dept}
+                  <option value={dept}>{dept}</option>
+                {/each}
+              </select>
+            </div>
+          </div>
+
+          <div class="col-12 col-md-6">
+            <label class="form-label">Ciudad</label>
+            <div class="input-group mb-3">
+              <span class="input-group-text"><i class="fas fa-city"></i></span>
+              <select
+                class="form-select"
+                bind:value={ciudad}
+                disabled={!departamento}
+                required
+              >
+                <option value="" disabled selected>
+                  {departamento
+                    ? "Selecciona una ciudad"
+                    : "Primero selecciona departamento"}
+                </option>
+                {#each ciudades as c}
+                  <option value={c}>{c}</option>
+                {/each}
+              </select>
+            </div>
           </div>
         </div>
-      </div>
 
-      <div class="campo">
-        <label for="departamento">Departamento:</label>
-        <select id="departamento">
-          <option value="" disabled selected>Selecciona un departamento</option>
-          <option>Antioquia</option>
-          <option>Cundinamarca</option>
-          <option>Valle del Cauca</option>
-        </select>
-      </div>
-
-      <div class="campo">
-        <label for="ciudad">Ciudad:</label>
-        <select id="ciudad">
-          <option value="" disabled selected>Selecciona una ciudad</option>
-          <option>Medellín</option>
-          <option>Bogotá</option>
-          <option>Cali</option>
-        </select>
-      </div>
-
-      <button type="submit">Publicar</button>
-    </form>
-    <p class="mensaje">Completa todos los campos para publicar tu servicio.</p>
+        <div class="d-grid mt-4">
+          <button
+            type="submit"
+            class="btn btn-success btn-lg"
+            disabled={loading}
+          >
+            {#if loading}
+              <span class="spinner-border spinner-border-sm" role="status"
+              ></span>
+              Publicando...
+            {:else}
+              Publicar
+            {/if}
+          </button>
+        </div>
+      </form>
+    </div>
   </div>
 </main>
-<style>
-  main {
-    font-family: 'Arial', sans-serif;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    padding: 2rem;
-    background-color: #f8f9fa;
-    min-height: 100vh;
-  }
-
-  .publicar {
-    background-color: white;
-    padding: 2rem;
-    border-radius: 15px;
-    box-shadow: 0px 6px 12px rgba(0, 0, 0, 0.2);
-    max-width: 600px;
-    width: 100%;
-  }
-
-  .campo {
-    margin-bottom: 1rem;
-  }
-
-  label {
-    font-weight: bold;
-    display: block;
-    margin-bottom: 0.5rem;
-  }
-
-  input, select, textarea {
-    width: 100%;
-    padding: 0.8rem;
-    border: 1px solid #ddd;
-    border-radius: 5px;
-    font-size: 1rem;
-  }
-
-  button {
-    padding: 0.8rem 1.5rem;
-    background-color: #0070f3;
-    color: white;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    font-size: 1rem;
-    margin-top: 1rem;
-    display: block;
-    width: 100%;
-  }
-
-  button:hover {
-    background-color: #005bb5;
-  }
-
-  .fotos {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem;
-    margin-top: 0.5rem;
-  }
-
-  .foto {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-  }
-
-  .foto img {
-    width: 100px;
-    height: 100px;
-    object-fit: cover;
-    border-radius: 5px;
-  }
-
-  .foto button {
-    background-color: #e53e3e;
-    border: none;
-    padding: 0.3rem 0.5rem;
-    font-size: 0.9rem;
-    color: white;
-    border-radius: 5px;
-    cursor: pointer;
-  }
-
-  .foto button:hover {
-    background-color: #c53030;
-  }
-
-  .mensaje {
-    margin-top: 1rem;
-    color: #e53e3e;
-    font-size: 1.1rem;
-    text-align: center;
-  }
-</style>

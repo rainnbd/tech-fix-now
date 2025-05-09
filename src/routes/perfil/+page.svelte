@@ -1,12 +1,19 @@
 <script>
   import "$lib/css/app.css";
-  import { auth } from "$lib/js/firebase";
+  import { auth, db } from "$lib/js/firebase";
   import {
     signOut,
     updateProfile,
     onAuthStateChanged,
     deleteUser,
   } from "firebase/auth";
+  import { doc, getDoc, updateDoc, deleteDoc } from "firebase/firestore";
+  import {
+    getStorage,
+    ref as storageRef,
+    uploadString,
+    getDownloadURL,
+  } from "firebase/storage";
 
   let usuario = null;
   let tipoCuenta = "Usuario";
@@ -23,22 +30,36 @@
   let mensaje = "";
   let editandoDatos = false;
   let fechaNacimiento = "";
+  let userDocRef = null;
 
   const fotoPorDefecto =
     "https://static.vecteezy.com/system/resources/previews/016/753/870/original/default-profile-picture-ui-element-template-editable-isolated-dashboard-component-flat-user-interface-visual-data-presentation-web-design-widget-for-mobile-application-with-light-theme-vector.jpg";
 
+  const storage = getStorage();
+
   if (typeof window !== "undefined") {
-    onAuthStateChanged(auth, (user) => {
+    onAuthStateChanged(auth, async (user) => {
       if (user) {
         usuario = user;
-        const partesNombre = user.displayName
-          ? user.displayName.split(" ")
-          : ["Usuario", ""];
-        nombre = partesNombre[0];
-        apellido = partesNombre[1] || "";
+        userDocRef = doc(db, "Register", user.uid);
+
+        const docSnap = await getDoc(userDocRef);
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          tipoCuenta = data.tipoCuenta;
+          nombre = data.nombres;
+          apellido = data.apellidos || "";
+          genero = data.genero || "";
+          ciudadMunicipio = data.municipio || data.ciudadMunicipio || "";
+          celular = data.celular || "";
+          direccion = data.direccion || "";
+          numeroContacto = data.numeroContacto || "";
+          imagen = data.foto || fotoPorDefecto;
+          fechaNacimiento = data.fechaNacimiento || "";
+        }
+
         correo = user.email;
         correoVerificado = user.emailVerified;
-        imagen = user.photoURL || fotoPorDefecto;
       } else {
         window.location.href = "/";
       }
@@ -47,60 +68,51 @@
 
   const guardarDatos = async () => {
     try {
-      if (tipoCuenta === "Usuario") {
-        const nombreCompleto = `${nombre} ${apellido}`.trim();
-        await updateProfile(usuario, {
-          displayName: `${nombreCompleto} (${genero})`,
-        });
-      } else {
-        await updateProfile(usuario, { displayName: nombre.trim() });
-      }
+      await updateProfile(usuario, {
+        displayName:
+          tipoCuenta === "Usuario" ? `${nombre} ${apellido}` : nombre,
+        photoURL: imagen,
+      });
+
+      const updateData = {
+        nombres: nombre,
+        apellidos: tipoCuenta === "Usuario" ? apellido : null,
+        genero: tipoCuenta === "Usuario" ? genero : null,
+        fechaNacimiento: tipoCuenta === "Usuario" ? fechaNacimiento : null,
+        foto: imagen,
+        celular: tipoCuenta === "Usuario" ? celular : null,
+        ...(tipoCuenta === "Empresa" && {
+          municipio: ciudadMunicipio,
+          numeroContacto,
+          direccion,
+        }),
+      };
+      await updateDoc(userDocRef, updateData);
+
       mensaje = "✔️ Datos actualizados correctamente.";
       editandoDatos = false;
     } catch (error) {
-      mensaje = `❌ Error al guardar: ${error.message}`;
+      mensaje = `❌ Error al guardar: ${error.code || error.message}`;
     }
-  };
-
-  const cambiarFoto = async (evento) => {
-    const archivo = evento.target.files[0];
-    if (!archivo) return;
-
-    const reader = new FileReader();
-    reader.onload = async (e) => {
-      try {
-        const img = new Image();
-        img.src = e.target.result;
-        img.onload = async () => {
-          const canvas = document.createElement("canvas");
-          canvas.width = 250;
-          canvas.height = 250;
-          const ctx = canvas.getContext("2d");
-          ctx.drawImage(img, 0, 0, 250, 250);
-          const nuevaFoto = canvas.toDataURL("image/jpeg", 0.8);
-
-          await updateProfile(auth.currentUser, { photoURL: nuevaFoto });
-          imagen = nuevaFoto;
-          mensaje = "✔️ Foto actualizada correctamente.";
-        };
-      } catch (error) {
-        mensaje = `❌ Error al actualizar la foto: ${error.message}`;
-      }
-    };
-    reader.readAsDataURL(archivo);
   };
 
   const eliminarCuenta = async () => {
     if (
       confirm(
-        "⚠️ ¿Estás seguro de que deseas eliminar tu cuenta? Esta acción es irreversible.",
+        "⚠️ ¿Estás seguro de eliminar tu cuenta? Esta acción es irreversible.",
       )
     ) {
       try {
+        await deleteDoc(userDocRef);
         await deleteUser(usuario);
         window.location.href = "/";
       } catch (error) {
-        mensaje = `❌ Error al eliminar la cuenta: ${error.message}`;
+        if (error.code === "auth/requires-recent-login") {
+          mensaje =
+            "❌ Para eliminar la cuenta debes volver a iniciar sesión y luego intentarlo de nuevo.";
+        } else {
+          mensaje = `❌ Error al eliminar cuenta: ${error.message}`;
+        }
       }
     }
   };
@@ -125,27 +137,6 @@
             alt="Foto de perfil"
             class="rounded-circle mb-3"
             style="width:150px; height:150px; object-fit:cover; border:4px solid #0d6efd;"
-          />
-          <div class="btn-group mb-3" role="group">
-            <button
-              class="btn btn-outline-primary"
-              on:click={() => document.querySelector("#uploadInput").click()}
-            >
-              <i class="fas fa-camera"></i> Cambiar
-            </button>
-            <button
-              class="btn btn-outline-danger"
-              on:click={() => (imagen = fotoPorDefecto)}
-            >
-              <i class="fas fa-trash-alt"></i> Eliminar
-            </button>
-          </div>
-          <input
-            id="uploadInput"
-            type="file"
-            accept="image/*"
-            on:change={cambiarFoto}
-            hidden
           />
         </div>
 
